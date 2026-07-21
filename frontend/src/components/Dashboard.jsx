@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FiCalendar, FiCheckCircle, FiClock, FiEdit2, FiPlus, FiSearch, FiTrash2 } from 'react-icons/fi';
+import { FiAlertCircle, FiCalendar, FiCheckCircle, FiClock, FiEdit2, FiPlus, FiSearch, FiTrash2 } from 'react-icons/fi';
 import { api } from '../context/AuthContext';
 
 const priorities = ['Low', 'Medium', 'High'];
@@ -16,10 +16,20 @@ const formatDate = (value, withTime = false) => {
 
 const dateInputValue = (value) => value ? new Date(value).toISOString().slice(0, 10) : '';
 
+const isOverdue = (task) => {
+  if (task.status === 'Completed' || !task.due_date) return false;
+  const dueDate = new Date(task.due_date);
+  const today = new Date();
+  dueDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  return dueDate < today;
+};
+
 const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editingTask, setEditingTask] = useState(null);
+  const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
@@ -53,8 +63,10 @@ const Dashboard = () => {
 
   const summary = useMemo(() => ({
     total: tasks.length,
+    pending: tasks.filter((task) => task.status === 'Pending').length,
+    inProgress: tasks.filter((task) => task.status === 'In Progress').length,
     completed: tasks.filter((task) => task.status === 'Completed').length,
-    active: tasks.filter((task) => task.status !== 'Completed').length,
+    overdue: tasks.filter(isOverdue).length,
   }), [tasks]);
 
   const openCreate = () => {
@@ -63,6 +75,7 @@ const Dashboard = () => {
     setEditingTask(null);
     setForm({ ...emptyForm, due_date: dateInputValue(tomorrow) });
     setFormError('');
+    setShowForm(true);
   };
 
   const openEdit = (task) => {
@@ -75,11 +88,13 @@ const Dashboard = () => {
       due_date: dateInputValue(task.due_date),
     });
     setFormError('');
+    setShowForm(true);
   };
 
   const closeForm = () => {
     setEditingTask(null);
     setFormError('');
+    setShowForm(false);
   };
 
   const submitTask = async (event) => {
@@ -126,8 +141,10 @@ const Dashboard = () => {
 
       <div className="summary-grid">
         <div className="summary-card"><FiCheckCircle /><span><strong>{summary.total}</strong> total tasks</span></div>
-        <div className="summary-card"><FiClock /><span><strong>{summary.active}</strong> active</span></div>
-        <div className="summary-card"><FiCalendar /><span><strong>{summary.completed}</strong> completed</span></div>
+        <div className="summary-card"><FiClock /><span><strong>{summary.pending}</strong> pending tasks</span></div>
+        <div className="summary-card"><FiClock /><span><strong>{summary.inProgress}</strong> in progress</span></div>
+        <div className="summary-card"><FiCalendar /><span><strong>{summary.completed}</strong> completed tasks</span></div>
+        <div className="summary-card summary-card-overdue"><FiAlertCircle /><span><strong>{summary.overdue}</strong> overdue tasks</span></div>
       </div>
 
       <div className="toolbar">
@@ -148,7 +165,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      {editingTask !== null || form.title !== '' ? <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && closeForm()}><form className="task-form" onSubmit={submitTask}><div className="form-heading"><div><p className="eyebrow">Task details</p><h2>{editingTask ? 'Edit task' : 'New task'}</h2></div><button type="button" className="icon-button" onClick={closeForm} title="Close">×</button></div>{formError && <div className="notice notice-error">{formError}</div>}<label>Title<input autoFocus value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} maxLength="255" required /></label><label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows="4" /></label><div className="form-grid"><label>Priority<select value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value })}>{priorities.map((priority) => <option key={priority}>{priority}</option>)}</select></label><label>Status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label></div><label>Due date<input type="date" value={form.due_date} onChange={(event) => setForm({ ...form, due_date: event.target.value })} required /></label><div className="form-actions"><button type="button" className="button button-secondary" onClick={closeForm}>Cancel</button><button type="submit" className="button button-primary" disabled={saving}>{saving ? 'Saving...' : editingTask ? 'Save changes' : 'Create task'}</button></div></form></div> : null}
+      {showForm ? <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && closeForm()}><form className="task-form" onSubmit={submitTask}><div className="form-heading"><div><p className="eyebrow">Task details</p><h2>{editingTask ? 'Edit task' : 'New task'}</h2></div><button type="button" className="icon-button" onClick={closeForm} title="Close">×</button></div>{formError && <div className="notice notice-error">{formError}</div>}<label>Title<input autoFocus value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} maxLength="255" required /></label><label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows="4" /></label><div className="form-grid"><label>Priority<select value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value })}>{priorities.map((priority) => <option key={priority}>{priority}</option>)}</select></label><label>Status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label></div><label>Due date<input type="date" value={form.due_date} onChange={(event) => setForm({ ...form, due_date: event.target.value })} required /></label><div className="form-actions"><button type="button" className="button button-secondary" onClick={closeForm}>Cancel</button><button type="submit" className="button button-primary" disabled={saving}>{saving ? 'Saving...' : editingTask ? 'Save changes' : 'Create task'}</button></div></form></div> : null}
     </section>
   );
 };

@@ -52,6 +52,8 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.login = login;
 const logout = (req, res) => {
+    // With JWT, logout is usually handled on the client side by dropping the token.
+    // We can return peace of mind response here.
     res.json({ message: 'Logged out successfully' });
 };
 exports.logout = logout;
