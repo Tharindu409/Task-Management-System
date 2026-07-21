@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
-import Navbar from './components/Navbar';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -20,7 +19,6 @@ const AppContent = () => {
 
   return (
     <div className="app-layout">
-      {isAuthenticated && <Navbar />}
       <main className="main-container">
         <Routes>
           <Route path="/login" element={<Login />} />

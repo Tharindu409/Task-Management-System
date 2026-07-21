@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FiAlertCircle, FiCalendar, FiCheckCircle, FiClock, FiEdit2, FiPlus, FiSearch, FiTrash2 } from 'react-icons/fi';
+import { FiAlertCircle, FiCalendar, FiCheckCircle, FiClock, FiEdit2, FiGrid, FiHelpCircle, FiHome, FiList, FiPlus, FiSearch, FiSettings, FiTrash2, FiUsers } from 'react-icons/fi';
 import { api } from '../context/AuthContext';
 
 const priorities = ['Low', 'Medium', 'High'];
@@ -69,6 +69,12 @@ const Dashboard = () => {
     overdue: tasks.filter(isOverdue).length,
   }), [tasks]);
 
+  const columns = [
+    { status: 'In Progress', label: 'In Progress', count: summary.inProgress, className: 'column-progress' },
+    { status: 'Pending', label: 'Pending', count: summary.pending, className: 'column-pending' },
+    { status: 'Completed', label: 'Completed', count: summary.completed, className: 'column-completed' },
+  ];
+
   const openCreate = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -133,37 +139,49 @@ const Dashboard = () => {
   };
 
   return (
-    <section className="dashboard">
-      <div className="dashboard-heading">
-        <div><p className="eyebrow">Your workspace</p><h1>Tasks, in focus.</h1><p className="subtitle">Keep the important work moving.</p></div>
-        <button type="button" className="button button-primary" onClick={openCreate}><FiPlus /> New task</button>
-      </div>
+    <section className="dashboard-shell">
+      <aside className="sidebar">
+        <div className="side-brand"><span className="brand-mark">S</span><strong>slothui</strong></div>
+        <label className="side-search"><FiSearch /><input placeholder="Search" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
+        <nav className="side-nav">
+          <button className="side-link active"><FiHome /> Home <span>{summary.total}</span></button>
+          <button className="side-link"><FiList /> Tasks</button>
+          <button className="side-link"><FiUsers /> Users</button>
+          <button className="side-link"><FiGrid /> APIs</button>
+          <button className="side-link"><FiCalendar /> Subscription</button>
+          <button className="side-link"><FiSettings /> Settings</button>
+          <button className="side-link"><FiHelpCircle /> Help &amp; Support</button>
+        </nav>
+        <div className="pro-banner"><span>Go Pro</span><span>☆</span></div>
+      </aside>
 
-      <div className="summary-grid">
-        <div className="summary-card"><FiCheckCircle /><span><strong>{summary.total}</strong> total tasks</span></div>
-        <div className="summary-card"><FiClock /><span><strong>{summary.pending}</strong> pending tasks</span></div>
-        <div className="summary-card"><FiClock /><span><strong>{summary.inProgress}</strong> in progress</span></div>
-        <div className="summary-card"><FiCalendar /><span><strong>{summary.completed}</strong> completed tasks</span></div>
-        <div className="summary-card summary-card-overdue"><FiAlertCircle /><span><strong>{summary.overdue}</strong> overdue tasks</span></div>
+      <div className="workspace">
+        <header className="workspace-header">
+          <div><h1>Kanban Dashboard <span>🗂️</span></h1></div>
+          <div className="header-actions"><button className="header-icon" title="Search"><FiSearch /></button><button className="share-button">Share <span>⌘</span></button><button className="header-icon" title="Export">⇧</button><button className="header-icon" onClick={openCreate} title="Add task"><FiPlus /></button></div>
+        </header>
+        <div className="workspace-tabs"><button className="tab">By Status</button><button className="tab selected">By Total Tasks <b>{summary.total}</b></button><button className="tab">Tasks Due</button><button className="tab">Extra Tasks</button><button className="tab">Tasks Completed</button><label className="sort-control">Sort By <select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)}><option value="All">Newest</option>{priorities.map((priority) => <option key={priority}>{priority}</option>)}</select></label></div>
+        {error && <div className="notice notice-error">{error}</div>}
+        {loading ? <div className="page-state">Loading tasks...</div> : (
+          <div className="kanban-board">
+            {columns.map((column) => {
+              const columnTasks = filteredTasks.filter((task) => task.status === column.status);
+              return <div className={`kanban-column ${column.className}`} key={column.status}>
+                <div className="column-heading"><span><b>{column.count}</b> {column.label}</span><button onClick={openCreate} title={`Add ${column.label} task`}><FiPlus /></button></div>
+                <div className="column-tasks">{columnTasks.length === 0 ? <div className="column-empty">No tasks here</div> : columnTasks.map((task) => (
+                  <article className="task-card" key={task.id}>
+                    <div className={`task-tag priority-${task.priority.toLowerCase()}`}>{isOverdue(task) ? 'Overdue' : `${task.priority} priority`}</div>
+                    <div className="task-title-row"><h2>{task.title}</h2></div>{task.description && <p>{task.description}</p>}
+                    <div className="task-meta"><span><FiCalendar /> {formatDate(task.due_date)}</span><span>{formatDate(task.updated_at, true)}</span></div>
+                    <div className="task-card-footer"><span className="avatar-stack"><i>{(task.title[0] || 'T').toUpperCase()}</i></span><span className="task-actions"><button type="button" className="icon-button" onClick={() => openEdit(task)} title="Edit task"><FiEdit2 /></button><button type="button" className="icon-button danger" onClick={() => removeTask(task)} title="Delete task"><FiTrash2 /></button></span></div>
+                  </article>
+                ))}</div>
+              </div>;
+            })}
+          </div>
+        )}
+        <div className="dashboard-footnote"><span><FiAlertCircle /> {summary.overdue} overdue tasks</span><button type="button" className="button button-primary" onClick={openCreate}><FiPlus /> New task</button></div>
       </div>
-
-      <div className="toolbar">
-        <label className="search-field"><FiSearch /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search tasks" /></label>
-        <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filter by status"><option>All</option>{statuses.map((status) => <option key={status}>{status}</option>)}</select>
-        <select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)} aria-label="Filter by priority"><option>All</option>{priorities.map((priority) => <option key={priority}>{priority}</option>)}</select>
-      </div>
-
-      {error && <div className="notice notice-error">{error}</div>}
-      {loading ? <div className="page-state">Loading tasks...</div> : filteredTasks.length === 0 ? <div className="empty-state"><FiCheckCircle /><h2>No tasks found</h2><p>Create a task or adjust your filters to get started.</p></div> : (
-        <div className="task-list">
-          {filteredTasks.map((task) => (
-            <article className="task-card" key={task.id}>
-              <div className="task-card-main"><div className="task-title-row"><h2>{task.title}</h2><span className={`status status-${task.status.toLowerCase().replace(' ', '-')}`}>{task.status}</span></div>{task.description && <p>{task.description}</p>}<div className="task-meta"><span className={`priority priority-${task.priority.toLowerCase()}`}>{task.priority}</span><span><FiCalendar /> Due {formatDate(task.due_date)}</span><span>Updated {formatDate(task.updated_at, true)}</span></div></div>
-              <div className="task-actions"><button type="button" className="icon-button" onClick={() => openEdit(task)} title="Edit task"><FiEdit2 /></button><button type="button" className="icon-button danger" onClick={() => removeTask(task)} title="Delete task"><FiTrash2 /></button></div>
-            </article>
-          ))}
-        </div>
-      )}
 
       {showForm ? <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && closeForm()}><form className="task-form" onSubmit={submitTask}><div className="form-heading"><div><p className="eyebrow">Task details</p><h2>{editingTask ? 'Edit task' : 'New task'}</h2></div><button type="button" className="icon-button" onClick={closeForm} title="Close">×</button></div>{formError && <div className="notice notice-error">{formError}</div>}<label>Title<input autoFocus value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} maxLength="255" required /></label><label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows="4" /></label><div className="form-grid"><label>Priority<select value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value })}>{priorities.map((priority) => <option key={priority}>{priority}</option>)}</select></label><label>Status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label></div><label>Due date<input type="date" value={form.due_date} onChange={(event) => setForm({ ...form, due_date: event.target.value })} required /></label><div className="form-actions"><button type="button" className="button button-secondary" onClick={closeForm}>Cancel</button><button type="submit" className="button button-primary" disabled={saving}>{saving ? 'Saving...' : editingTask ? 'Save changes' : 'Create task'}</button></div></form></div> : null}
     </section>
