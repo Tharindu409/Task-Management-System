@@ -1,33 +1,23 @@
+import { FiCheckSquare, FiLogOut, FiUser } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
-import { FiLogOut, FiCheckSquare, FiUser } from 'react-icons/fi';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
 
   return (
-    <nav className="glass-nav">
-      <div className="nav-container">
-        <div className="nav-logo">
-          <FiCheckSquare className="logo-icon" />
-          <span className="logo-text">TaskFlow</span>
-        </div>
-
+    <header className="topbar">
+      <div className="topbar-inner">
+        <div className="brand"><FiCheckSquare /> <span>TaskFlow</span></div>
         {user && (
-          <div className="nav-content">
-            <div className="user-badge">
-              <div className="avatar">
-                <FiUser className="avatar-icon" />
-              </div>
-              <span className="user-name">{user.name || 'User'}</span>
-            </div>
-            <button onClick={logout} className="btn-logout" title="Sign Out">
-              <FiLogOut className="logout-icon" />
-              <span>Log out</span>
+          <div className="account-actions">
+            <span className="account-name"><FiUser /> {user.name || 'User'}</span>
+            <button type="button" className="button button-ghost" onClick={logout} title="Sign out">
+              <FiLogOut /> <span>Sign out</span>
             </button>
           </div>
         )}
       </div>
-    </nav>
+    </header>
   );
 };
 
