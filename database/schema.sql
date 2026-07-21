@@ -11,6 +11,18 @@ CREATE TABLE IF NOT EXISTS Users (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS Tasks (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES Users(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  priority VARCHAR(50) NOT NULL CHECK (priority IN ('Low', 'Medium', 'High')),
+  status VARCHAR(50) NOT NULL CHECK (status IN ('Pending', 'In Progress', 'Completed')),
+  due_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Insert default admin user
 INSERT INTO Users (name, email, password) 
 VALUES ('Admin', 'admin@test.com', '$2b$10$5LvBmDtTluvJ.s4Lc7XiverJG/4bmSF0HTd/Gbx7XWJh572nyBZY2')
