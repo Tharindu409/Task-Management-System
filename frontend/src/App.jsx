@@ -15,8 +15,6 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const AppContent = () => {
-  const { isAuthenticated } = useAuth();
-
   return (
     <div className="app-layout">
       <main className="main-container">
