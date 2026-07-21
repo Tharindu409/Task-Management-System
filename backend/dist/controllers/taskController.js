@@ -52,6 +52,41 @@ const getAuthenticatedUserId = (req) => {
     return typeof userId === 'number' ? userId : null;
 };
 const isValidDate = (value) => !Number.isNaN(Date.parse(value));
+const isTodayOrLater = (value) => {
+    const dueDate = new Date(value);
+    const today = new Date();
+    dueDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    return dueDate >= today;
+};
+const validateTaskInput = (body) => {
+    const { title, priority, status, due_date: dueDate } = body;
+    if (typeof title !== 'string' || !title.trim()) {
+        return 'Title is required';
+    }
+    if (typeof priority !== 'string' || !priority) {
+        return 'Priority is required';
+    }
+    if (!validPriorities.includes(priority)) {
+        return 'Priority must be Low, Medium, or High';
+    }
+    if (typeof status !== 'string' || !status) {
+        return 'Status is required';
+    }
+    if (!validStatuses.includes(status)) {
+        return 'Status must be Pending, In Progress, or Completed';
+    }
+    if (typeof dueDate !== 'string' || !dueDate) {
+        return 'Due date is required';
+    }
+    if (!isValidDate(dueDate)) {
+        return 'Due date must be a valid date';
+    }
+    if (!isTodayOrLater(dueDate)) {
+        return 'Due date cannot be earlier than today';
+    }
+    return null;
+};
 const getTasks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userId = getAuthenticatedUserId(req);
@@ -101,20 +136,9 @@ const createTask = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             return;
         }
         const { title, description, priority, status, due_date } = req.body;
-        if (!title || !priority || !status || !due_date) {
-            res.status(400).json({ error: 'Title, priority, status, and due_date are required' });
-            return;
-        }
-        if (!validPriorities.includes(priority)) {
-            res.status(400).json({ error: 'Priority must be Low, Medium, or High' });
-            return;
-        }
-        if (!validStatuses.includes(status)) {
-            res.status(400).json({ error: 'Status must be Pending, In Progress, or Completed' });
-            return;
-        }
-        if (!isValidDate(due_date)) {
-            res.status(400).json({ error: 'due_date must be a valid date' });
+        const validationError = validateTaskInput(req.body);
+        if (validationError) {
+            res.status(400).json({ error: validationError });
             return;
         }
         const task = yield taskModel.createTask(userId, title, description || null, priority, status, due_date);
@@ -139,20 +163,9 @@ const updateTask = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             return;
         }
         const { title, description, priority, status, due_date } = req.body;
-        if (!title || !priority || !status || !due_date) {
-            res.status(400).json({ error: 'Title, priority, status, and due_date are required' });
-            return;
-        }
-        if (!validPriorities.includes(priority)) {
-            res.status(400).json({ error: 'Priority must be Low, Medium, or High' });
-            return;
-        }
-        if (!validStatuses.includes(status)) {
-            res.status(400).json({ error: 'Status must be Pending, In Progress, or Completed' });
-            return;
-        }
-        if (!isValidDate(due_date)) {
-            res.status(400).json({ error: 'due_date must be a valid date' });
+        const validationError = validateTaskInput(req.body);
+        if (validationError) {
+            res.status(400).json({ error: validationError });
             return;
         }
         const task = yield taskModel.updateTask(taskId, userId, title, description || null, priority, status, due_date);

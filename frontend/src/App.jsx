@@ -24,6 +24,7 @@ const AppContent = () => {
             path="/"
             element={
               <ProtectedRoute>
+                
                 <Dashboard />
               </ProtectedRoute>
             }

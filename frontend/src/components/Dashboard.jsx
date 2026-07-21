@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FiAlertCircle, FiCalendar, FiEdit2, FiGrid, FiHelpCircle, FiHome, FiList, FiMoon, FiPlus, FiSearch, FiSettings, FiSun, FiTrash2, FiUsers } from 'react-icons/fi';
+import { FiAlertCircle, FiCalendar, FiEdit2, FiPlus, FiSearch, FiTrash2 } from 'react-icons/fi';
 import { api } from '../context/AuthContext';
 import { isOverdue, paginate } from '../utils/taskUtils';
+import Navbar from './Navbar';
 
 const priorities = ['Low', 'Medium', 'High'];
 const statuses = ['Pending', 'In Progress', 'Completed'];
+const sortOptions = [
+  { value: 'newest', label: 'Newest Created' },
+  { value: 'oldest', label: 'Oldest Created' },
+  { value: 'dueDate', label: 'Due Date' },
+];
 
 const emptyForm = { title: '', description: '', priority: 'Medium', status: 'Pending', due_date: '' };
 
@@ -16,6 +22,7 @@ const formatDate = (value, withTime = false) => {
 };
 
 const dateInputValue = (value) => value ? new Date(value).toISOString().slice(0, 10) : '';
+const todayInputValue = () => new Date().toISOString().slice(0, 10);
 
 const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
@@ -25,6 +32,7 @@ const Dashboard = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
+  const [sortBy, setSortBy] = useState('newest');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -66,11 +74,21 @@ const Dashboard = () => {
       && (priorityFilter === 'All' || task.priority === priorityFilter);
   }), [tasks, search, statusFilter, priorityFilter]);
 
-  const paginatedTasks = useMemo(() => paginate(filteredTasks, page), [filteredTasks, page]);
+  const sortedTasks = useMemo(() => [...filteredTasks].sort((firstTask, secondTask) => {
+    if (sortBy === 'oldest') {
+      return new Date(firstTask.created_at) - new Date(secondTask.created_at);
+    }
+    if (sortBy === 'dueDate') {
+      return new Date(firstTask.due_date) - new Date(secondTask.due_date);
+    }
+    return new Date(secondTask.created_at) - new Date(firstTask.created_at);
+  }), [filteredTasks, sortBy]);
+
+  const paginatedTasks = useMemo(() => paginate(sortedTasks, page), [sortedTasks, page]);
 
   useEffect(() => {
     setPage(1);
-  }, [search, statusFilter, priorityFilter]);
+  }, [search, statusFilter, priorityFilter, sortBy]);
 
   const summary = useMemo(() => ({
     total: tasks.length,
@@ -116,8 +134,24 @@ const Dashboard = () => {
 
   const submitTask = async (event) => {
     event.preventDefault();
-    if (!form.title.trim() || !form.due_date) {
-      setFormError('Title and due date are required.');
+    if (!form.title.trim()) {
+      setFormError('Title is required.');
+      return;
+    }
+    if (!form.priority) {
+      setFormError('Priority is required.');
+      return;
+    }
+    if (!form.status) {
+      setFormError('Status is required.');
+      return;
+    }
+    if (!form.due_date) {
+      setFormError('Due date is required.');
+      return;
+    }
+    if (form.due_date < todayInputValue()) {
+      setFormError('Due date cannot be earlier than today.');
       return;
     }
 
@@ -155,35 +189,23 @@ const Dashboard = () => {
 
   return (
     <section className={`dashboard-shell${darkMode ? ' dark-mode' : ''}`}>
-      <aside className="sidebar">
-        <div className="side-brand"><span className="brand-mark">S</span><strong>slothui</strong></div>
-        <label className="side-search"><FiSearch /><input placeholder="Search" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
-        <nav className="side-nav">
-          <button className="side-link active"><FiHome /> Home <span>{summary.total}</span></button>
-          <button className="side-link"><FiList /> Tasks</button>
-          <button className="side-link"><FiUsers /> Users</button>
-          <button className="side-link"><FiGrid /> APIs</button>
-          <button className="side-link"><FiCalendar /> Subscription</button>
-          <button className="side-link"><FiSettings /> Settings</button>
-          <button className="side-link"><FiHelpCircle /> Help &amp; Support</button>
-        </nav>
-        <div className="pro-banner"><span>Go Pro</span><span>☆</span></div>
-      </aside>
-
-      <div className="workspace">
-        <header className="workspace-header">
-          <div><h1>Kanban Dashboard <span>🗂️</span></h1></div>
-          <div className="header-actions"><button className="header-icon" title="Toggle dark mode" onClick={() => setDarkMode((current) => !current)}>{darkMode ? <FiSun /> : <FiMoon />}</button><button className="header-icon" title="Search"><FiSearch /></button><button className="share-button">Share <span>⌘</span></button><button className="header-icon" title="Export">⇧</button><button className="header-icon" onClick={openCreate} title="Add task"><FiPlus /></button></div>
-        </header>
+      <Navbar
+        search={search}
+        onSearchChange={setSearch}
+        summaryTotal={summary.total}
+        darkMode={darkMode}
+        onToggleDarkMode={() => setDarkMode((current) => !current)}
+        onCreateTask={openCreate}
+      >
         <div className="workspace-tabs"><button className="tab">By Status</button><button className="tab selected">By Total Tasks <b>{summary.total}</b></button><button className="tab">Tasks Due</button><button className="tab">Extra Tasks</button><button className="tab">Tasks Completed</button></div>
-        <div className="filter-bar"><label className="filter-search"><FiSearch /><input aria-label="Search tasks by title" placeholder="Search by task title" value={search} onChange={(event) => setSearch(event.target.value)} /></label><label className="filter-select">Status<select aria-label="Filter tasks by status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="All">All statuses</option>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label><label className="filter-select">Priority<select aria-label="Filter tasks by priority" value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)}><option value="All">All priorities</option>{priorities.map((priority) => <option key={priority}>{priority}</option>)}</select></label></div>
+        <div className="filter-bar"><label className="filter-search"><FiSearch /><input aria-label="Search tasks by title" placeholder="Search by task title" value={search} onChange={(event) => setSearch(event.target.value)} /></label><label className="filter-select">Status<select aria-label="Filter tasks by status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="All">All statuses</option>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label><label className="filter-select">Priority<select aria-label="Filter tasks by priority" value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)}><option value="All">All priorities</option>{priorities.map((priority) => <option key={priority}>{priority}</option>)}</select></label><label className="filter-select">Sort by<select aria-label="Sort tasks" value={sortBy} onChange={(event) => setSortBy(event.target.value)}>{sortOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label></div>
         {error && <div className="notice notice-error">{error}</div>}
         {loading ? <div className="page-state">Loading tasks...</div> : (
           <div className="kanban-board">
             {columns.map((column) => {
               const columnTasks = paginatedTasks.items.filter((task) => task.status === column.status);
               return <div className={`kanban-column ${column.className}`} key={column.status}>
-                <div className="column-heading"><span><b>{column.count}</b> {column.label}</span><button onClick={openCreate} title={`Add ${column.label} task`}><FiPlus /></button></div>
+                <div className="column-heading"><span><b>{column.count}</b> {column.label}</span><button type="button" onClick={openCreate} title={`Add ${column.label} task`}><FiPlus /></button></div>
                 <div className="column-tasks">{columnTasks.length === 0 ? <div className="column-empty">No tasks here</div> : columnTasks.map((task) => (
                   <article className="task-card" key={task.id}>
                     <div className={`task-tag priority-${task.priority.toLowerCase()}`}>{isOverdue(task) ? 'Overdue' : `${task.priority} priority`}</div>
@@ -198,9 +220,9 @@ const Dashboard = () => {
         )}
         {paginatedTasks.totalPages > 1 && <div className="pagination"><button type="button" onClick={() => setPage((current) => current - 1)} disabled={page === 1}>Previous</button><span>Page {paginatedTasks.page} of {paginatedTasks.totalPages}</span><button type="button" onClick={() => setPage((current) => current + 1)} disabled={page === paginatedTasks.totalPages}>Next</button></div>}
         <div className="dashboard-footnote"><span><FiAlertCircle /> {summary.overdue} overdue tasks</span><button type="button" className="button button-primary" onClick={openCreate}><FiPlus /> New task</button></div>
-      </div>
+      </Navbar>
 
-      {showForm ? <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && closeForm()}><form className="task-form" onSubmit={submitTask}><div className="form-heading"><div><p className="eyebrow">Task details</p><h2>{editingTask ? 'Edit task' : 'New task'}</h2></div><button type="button" className="icon-button" onClick={closeForm} title="Close">×</button></div>{formError && <div className="notice notice-error">{formError}</div>}<label>Title<input autoFocus value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} maxLength="255" required /></label><label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows="4" /></label><div className="form-grid"><label>Priority<select value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value })}>{priorities.map((priority) => <option key={priority}>{priority}</option>)}</select></label><label>Status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label></div><label>Due date<input type="date" value={form.due_date} onChange={(event) => setForm({ ...form, due_date: event.target.value })} required /></label><div className="form-actions"><button type="button" className="button button-secondary" onClick={closeForm}>Cancel</button><button type="submit" className="button button-primary" disabled={saving}>{saving ? 'Saving...' : editingTask ? 'Save changes' : 'Create task'}</button></div></form></div> : null}
+      {showForm ? <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && closeForm()}><form className="task-form" onSubmit={submitTask}><div className="form-heading"><div><p className="eyebrow">Task details</p><h2>{editingTask ? 'Edit task' : 'New task'}</h2></div><button type="button" className="icon-button" onClick={closeForm} title="Close">×</button></div>{formError && <div className="notice notice-error">{formError}</div>}<label>Title<input autoFocus value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} maxLength="255" required /></label><label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows="4" /></label><div className="form-grid"><label>Priority<select value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value })} required><option value="">Select priority</option>{priorities.map((priority) => <option key={priority}>{priority}</option>)}</select></label><label>Status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })} required><option value="">Select status</option>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label></div><label>Due date<input type="date" min={todayInputValue()} value={form.due_date} onChange={(event) => setForm({ ...form, due_date: event.target.value })} required /></label><div className="form-actions"><button type="button" className="button button-secondary" onClick={closeForm}>Cancel</button><button type="submit" className="button button-primary" disabled={saving}>{saving ? 'Saving...' : editingTask ? 'Save changes' : 'Create task'}</button></div></form></div> : null}
       {toast && <div className={`toast toast-${toast.type}`} role="status">{toast.message}</div>}
     </section>
   );
