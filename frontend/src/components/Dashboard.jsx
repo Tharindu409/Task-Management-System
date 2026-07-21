@@ -23,6 +23,7 @@ const Dashboard = () => {
   const [editingTask, setEditingTask] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -59,17 +60,17 @@ const Dashboard = () => {
 
   const filteredTasks = useMemo(() => tasks.filter((task) => {
     const query = search.toLowerCase();
-    const matchesSearch = task.title.toLowerCase().includes(query)
-      || (task.description || '').toLowerCase().includes(query);
+    const matchesSearch = task.title.toLowerCase().includes(query);
     return matchesSearch
+      && (statusFilter === 'All' || task.status === statusFilter)
       && (priorityFilter === 'All' || task.priority === priorityFilter);
-  }), [tasks, search, priorityFilter]);
+  }), [tasks, search, statusFilter, priorityFilter]);
 
   const paginatedTasks = useMemo(() => paginate(filteredTasks, page), [filteredTasks, page]);
 
   useEffect(() => {
     setPage(1);
-  }, [search, priorityFilter]);
+  }, [search, statusFilter, priorityFilter]);
 
   const summary = useMemo(() => ({
     total: tasks.length,
@@ -174,7 +175,8 @@ const Dashboard = () => {
           <div><h1>Kanban Dashboard <span>🗂️</span></h1></div>
           <div className="header-actions"><button className="header-icon" title="Toggle dark mode" onClick={() => setDarkMode((current) => !current)}>{darkMode ? <FiSun /> : <FiMoon />}</button><button className="header-icon" title="Search"><FiSearch /></button><button className="share-button">Share <span>⌘</span></button><button className="header-icon" title="Export">⇧</button><button className="header-icon" onClick={openCreate} title="Add task"><FiPlus /></button></div>
         </header>
-        <div className="workspace-tabs"><button className="tab">By Status</button><button className="tab selected">By Total Tasks <b>{summary.total}</b></button><button className="tab">Tasks Due</button><button className="tab">Extra Tasks</button><button className="tab">Tasks Completed</button><label className="sort-control">Sort By <select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)}><option value="All">Newest</option>{priorities.map((priority) => <option key={priority}>{priority}</option>)}</select></label></div>
+        <div className="workspace-tabs"><button className="tab">By Status</button><button className="tab selected">By Total Tasks <b>{summary.total}</b></button><button className="tab">Tasks Due</button><button className="tab">Extra Tasks</button><button className="tab">Tasks Completed</button></div>
+        <div className="filter-bar"><label className="filter-search"><FiSearch /><input aria-label="Search tasks by title" placeholder="Search by task title" value={search} onChange={(event) => setSearch(event.target.value)} /></label><label className="filter-select">Status<select aria-label="Filter tasks by status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="All">All statuses</option>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label><label className="filter-select">Priority<select aria-label="Filter tasks by priority" value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)}><option value="All">All priorities</option>{priorities.map((priority) => <option key={priority}>{priority}</option>)}</select></label></div>
         {error && <div className="notice notice-error">{error}</div>}
         {loading ? <div className="page-state">Loading tasks...</div> : (
           <div className="kanban-board">
