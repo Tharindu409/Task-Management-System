@@ -36,14 +36,20 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
+    <main className="auth-container">
+      <section className="auth-showcase" aria-hidden="true">
+         
+        <p className="auth-kicker">Task management, clarified.</p>
+        <h1>Make room for the work that matters.</h1>
+        <p className="auth-showcase-copy">Plan the day, keep the details close, and see every task move forward.</p>
+        <div className="auth-preview"><span className="preview-dot preview-dot-purple" /><span className="preview-dot preview-dot-orange" /><span className="preview-dot preview-dot-green" /><div className="preview-line preview-line-long" /><div className="preview-line" /><div className="preview-line preview-line-short" /></div>
+      </section>
+
+      <section className="auth-card" aria-labelledby="login-title">
         <div className="auth-header">
-          <div className="auth-logo">
-            <span className="logo-spark">✦</span> TaskFlow
-          </div>
-          <h2>Welcome Back</h2>
-          <p>Login to manage your daily tasks seamlessly</p>
+          <div className="auth-logo">  TaskFlow</div>
+          <h2 id="login-title">Welcome back</h2>
+          <p>Sign in to continue to your workspace.</p>
         </div>
 
         {error && (
@@ -99,11 +105,9 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="auth-footer">
-          <p>Default credentials: <br /><strong>admin@test.com</strong> / <strong>123456</strong></p>
-        </div>
-      </div>
-    </div>
+        <div className="auth-footer"><span>Demo account</span><strong>admin@test.com</strong><span>Use the provided credentials to sign in.</span></div>
+      </section>
+    </main>
   );
 };
 

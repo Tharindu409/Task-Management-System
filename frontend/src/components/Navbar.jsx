@@ -1,4 +1,4 @@
-import { FiCalendar, FiCheckSquare, FiGrid, FiHelpCircle, FiHome, FiList, FiLogOut, FiMoon, FiPlus, FiSearch, FiSettings, FiSun, FiUsers } from 'react-icons/fi';
+import { FiCalendar, FiGrid, FiHelpCircle, FiHome, FiList, FiLogOut, FiMoon, FiPlus, FiSearch, FiSettings, FiSun, FiUsers } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 
 const Navbar = ({ search, onSearchChange, summaryTotal, darkMode, onToggleDarkMode, onCreateTask, children }) => {
