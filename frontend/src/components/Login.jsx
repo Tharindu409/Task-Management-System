@@ -105,8 +105,7 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="auth-footer"><span>Demo account</span><strong>admin@test.com</strong><span>Use the provided credentials to sign in.</span></div>
-      </section>
+       </section>
     </main>
   );
 };

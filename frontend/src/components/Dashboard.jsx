@@ -201,6 +201,7 @@ const Dashboard = () => {
         <div className="filter-bar"><label className="filter-search"><FiSearch /><input aria-label="Search tasks by title" placeholder="Search by task title" value={search} onChange={(event) => setSearch(event.target.value)} /></label><label className="filter-select">Status<select aria-label="Filter tasks by status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="All">All statuses</option>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label><label className="filter-select">Priority<select aria-label="Filter tasks by priority" value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)}><option value="All">All priorities</option>{priorities.map((priority) => <option key={priority}>{priority}</option>)}</select></label><label className="filter-select">Sort by<select aria-label="Sort tasks" value={sortBy} onChange={(event) => setSortBy(event.target.value)}>{sortOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label></div>
         {error && <div className="notice notice-error">{error}</div>}
         {loading ? <div className="page-state">Loading tasks...</div> : (
+            
           <div className="kanban-board">
             {columns.map((column) => {
               const columnTasks = paginatedTasks.items.filter((task) => task.status === column.status);

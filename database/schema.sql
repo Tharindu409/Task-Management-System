@@ -23,7 +23,4 @@ CREATE TABLE IF NOT EXISTS Tasks (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert default admin user
-INSERT INTO Users (name, email, password) 
-VALUES ('Admin', 'admin@test.com', '$2b$10$5LvBmDtTluvJ.s4Lc7XiverJG/4bmSF0HTd/Gbx7XWJh572nyBZY2')
-ON CONFLICT (email) DO NOTHING;
+ 

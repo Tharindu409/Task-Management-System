@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
+import Settings from './components/Settings';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -29,6 +30,7 @@ const AppContent = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
