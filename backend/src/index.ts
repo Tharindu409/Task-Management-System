@@ -53,12 +53,7 @@ app.listen(port, async () => {
       );
     `);
 
-    // Insert default admin user if it does not exist
-    await query(`
-      INSERT INTO Users (name, email, password) 
-      VALUES ('Admin', 'admin@test.com', '$2b$10$5LvBmDtTluvJ.s4Lc7XiverJG/4bmSF0HTd/Gbx7XWJh572nyBZY2')
-      ON CONFLICT (email) DO NOTHING;
-    `);
+     
     console.log('Database tables verified/created successfully.');
   } catch (err) {
     console.error('Failed to connect to PostgreSQL or initialize schema:', err);
