@@ -3,10 +3,18 @@ import axios from 'axios';
 
 const AuthContext = createContext(null);
 
-// ✅ Correct dynamic API_URL
-const API_URL = (import.meta.env?.VITE_API_URL || process.env?.REACT_APP_API_URL || 'http://localhost:5000') + '/api';
+const getBaseUrl = () => {
+  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (typeof process !== 'undefined' && process.env?.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  return 'http://localhost:5000';
+};
 
-// Create a custom axios instance
+const API_URL = `${getBaseUrl()}/api`;
+
 export const api = axios.create({
   baseURL: API_URL,
 });
